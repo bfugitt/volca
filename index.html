@@ -3,202 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Volca Sample Classroom Sequencer</title>
+    <title>Volca Sample Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .volca-gradient {
-            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
-        }
-        .step-btn {
-            aspect-ratio: 1/1;
-            transition: all 0.05s;
-        }
-        .step-active {
-            background-color: #ef4444;
-            box-shadow: 0 0 8px #ef4444;
-            border-color: transparent;
-        }
-        .current-step {
-            outline: 2px solid #3b82f6;
-            outline-offset: 1px;
-            z-index: 10;
-        }
-        .grid-cols-sequencer {
-            grid-template-columns: 180px repeat(16, minmax(0, 1fr));
-        }
-        input[type=range].small-slider {
-            height: 4px;
-            -webkit-appearance: none;
-            background: #e5e7eb;
-            border-radius: 2px;
-        }
-        input[type=range].small-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 10px;
-            height: 10px;
-            background: #ef4444;
-            border-radius: 50%;
-            cursor: pointer;
-        }
+        body { height: 100vh; overflow: hidden; }
+        .volca-gradient { background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%); }
+        .step-btn { transition: all 0.05s; height: 100%; border-radius: 4px; }
+        .step-active { background-color: #ef4444 !important; box-shadow: 0 0 8px #ef4444; }
+        .current-step { outline: 2px solid #3b82f6; outline-offset: 1px; z-index: 10; }
+        .grid-container { display: grid; grid-template-columns: 140px repeat(16, minmax(0, 1fr)); flex-grow: 1; gap: 4px; padding: 8px; overflow: hidden; }
+        input[type=range].small-slider { height: 4px; -webkit-appearance: none; background: #444; border-radius: 2px; width: 100%; }
+        input[type=range].small-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; cursor: pointer; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-2 md:p-4 font-sans text-gray-800">
+<body class="bg-gray-100 flex flex-col font-sans text-gray-800">
 
-    <div class="max-w-6xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-gray-800">
-        <!-- Header -->
-        <div class="volca-gradient p-3 text-white border-b-4 border-gray-800 flex justify-between items-center">
-            <div>
-                <h1 class="text-lg font-bold tracking-tighter italic uppercase">Volca <span class="text-red-500">Performance Hub</span></h1>
-                <p class="text-[7px] uppercase tracking-[0.3em] opacity-70">4th Grade Music Lab / MIDI Controller</p>
-            </div>
-            <div class="flex items-center gap-3">
-                <div id="midi-status" class="text-[9px] bg-gray-900 px-3 py-1 rounded-full border border-gray-600 text-gray-400 font-mono">
-                    MIDI: Disconnected
+    <div class="volca-gradient p-2 text-white border-b-2 border-gray-800 flex justify-between items-center shrink-0">
+        <div>
+            <h1 class="text-sm font-bold tracking-tighter italic uppercase">Volca <span class="text-red-500">Sample Hub</span></h1>
+        </div>
+        <div id="midi-status" class="text-[8px] bg-gray-900 px-2 py-1 rounded-full border border-gray-600 text-gray-400 font-mono">MIDI: Disconnected</div>
+    </div>
+
+    <div class="p-2 space-y-2 flex flex-col flex-grow overflow-hidden">
+        <div class="flex items-center justify-between bg-white p-2 rounded-xl border border-gray-200 shrink-0">
+            <div class="flex items-center gap-4">
+                <div class="flex flex-col gap-1 w-24">
+                    <label class="text-[8px] font-black text-gray-400 uppercase">Tempo: <span id="tempo-val" class="text-gray-800">120</span></label>
+                    <input type="range" id="tempo-slider" min="40" max="240" value="120" class="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-600">
                 </div>
+                <button id="play-btn" class="bg-green-600 hover:bg-green-500 text-white text-[10px] px-4 py-1.5 rounded-full font-black uppercase shadow-[0_2px_0_0_rgba(22,101,52,1)] active:shadow-none active:translate-y-0.5 transition-all">▶ Play</button>
+                <button id="clear-grid" class="text-[9px] border border-gray-300 px-3 py-1.5 rounded-full uppercase font-bold text-gray-500 hover:bg-gray-100">Clear</button>
             </div>
+            <div class="text-[8px] text-gray-400 font-bold uppercase italic">Global: LED 9 & 10 ON</div>
         </div>
 
-        <div class="p-4 space-y-4">
-            <!-- Top Controls -->
-            <div class="flex flex-wrap items-center justify-between gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-200">
-                <div class="flex items-center gap-6">
-                    <div class="flex flex-col gap-1 w-32">
-                        <label class="text-[10px] font-black text-gray-400 uppercase flex justify-between">
-                            Tempo <span id="tempo-val" class="text-gray-800">120 BPM</span>
-                        </label>
-                        <input type="range" id="tempo-slider" min="40" max="240" value="120" class="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-600">
-                    </div>
-                    <button id="play-btn" class="bg-green-600 hover:bg-green-500 text-white text-xs px-8 py-2 rounded-full font-black uppercase shadow-[0_3px_0_0_rgba(22,101,52,1)] active:shadow-none active:translate-y-1 transition-all">
-                        ▶ Play Sequence
-                    </button>
-                    <button id="clear-grid" class="text-[10px] border border-gray-300 px-4 py-2 rounded-full uppercase font-bold text-gray-500 hover:bg-gray-100">
-                        Clear Grid
-                    </button>
-                </div>
-                <div class="text-[9px] text-gray-400 text-right font-bold uppercase italic">
-                    Note: Select sounds manually on the Volca unit
-                </div>
-            </div>
-
-            <!-- Main Sequencer Grid -->
-            <div class="bg-gray-100 p-3 rounded-2xl border border-gray-200 overflow-x-auto">
-                <div id="sequencer-grid" class="grid grid-cols-sequencer gap-y-3 gap-x-1 min-w-[900px]">
-                    <!-- Labels, Sliders, and Steps generated by JS -->
-                </div>
-            </div>
+        <div id="sequencer-grid" class="grid-container bg-gray-200 rounded-xl border border-gray-300">
+            <!-- JS Populated -->
         </div>
-        
-        <div class="bg-gray-800 p-2 text-center">
-            <p id="midi-log" class="text-[9px] font-mono text-gray-400 uppercase tracking-widest">Ready for MIDI communication</p>
-        </div>
+    </div>
+    
+    <div class="bg-gray-800 p-1 text-center shrink-0">
+        <p id="midi-log" class="text-[8px] font-mono text-gray-500 uppercase tracking-widest">System Ready</p>
     </div>
 
     <script>
-        let midiOut = null;
-        let isPlaying = false;
-        let currentStep = 0;
-        let tempo = 120;
-        let timerId = null;
-
-        const PARTS = 10;
-        const STEPS = 16;
+        let midiOut = null, isPlaying = false, currentStep = 0, tempo = 120, timerId = null;
+        const PARTS = 10, STEPS = 16;
         const gridState = Array.from({ length: PARTS }, () => Array(STEPS).fill(0));
 
-        // --- MIDI SETUP ---
         if (navigator.requestMIDIAccess) {
             navigator.requestMIDIAccess().then(access => {
                 const update = () => {
                     const outputs = Array.from(access.outputs.values());
                     midiOut = outputs[0] || null;
                     const status = document.getElementById('midi-status');
-                    status.innerText = midiOut ? `CONNECTED: ${midiOut.name}` : "DISCONNECTED";
-                    status.className = `text-[9px] bg-gray-900 px-3 py-1 rounded-full border border-gray-600 ${midiOut ? 'text-green-500' : 'text-red-400'}`;
+                    status.innerText = midiOut ? `ON: ${midiOut.name}` : "OFF";
+                    status.style.color = midiOut ? "#4ade80" : "#f87171";
                 };
                 access.onstatechange = update;
                 update();
             });
         }
 
-        function sendMidiNote(channel, note) {
-            if (!midiOut) return;
-            midiOut.send([0x90 + (channel - 1), note, 127]);
-            setTimeout(() => midiOut.send([0x80 + (channel - 1), note, 0]), 20);
-        }
+        function sendMidi(c, n, v) { if (midiOut) midiOut.send([0x90 + c, n, v]); setTimeout(() => { if(midiOut) midiOut.send([0x80+c, n, 0])}, 20); }
+        function sendCC(c, cc, v) { if (midiOut) midiOut.send([0xB0 + c, cc, v]); }
 
-        function sendControlChange(channel, cc, value) {
-            if (!midiOut) return;
-            midiOut.send([0xB0 + (channel - 1), cc, value]);
-        }
-
-        // --- GRID UI ---
         const gridContainer = document.getElementById('sequencer-grid');
         function createGrid() {
             gridContainer.innerHTML = '';
-            for (let row = 0; row < PARTS; row++) {
-                // Control Panel for each Part
-                const controlPanel = document.createElement('div');
-                controlPanel.className = "flex flex-col pr-4 justify-center space-y-2 border-r border-gray-300 mr-2";
-                
-                const label = document.createElement('div');
-                label.className = "text-[10px] font-black text-gray-800 uppercase flex justify-between";
-                label.innerHTML = `<span>PART ${row + 1}</span> <span class="text-red-500">CH ${row+1}</span>`;
-                
-                // Pitch Control (CC 43)
-                const pitchRow = document.createElement('div');
-                pitchRow.className = "flex flex-col";
-                pitchRow.innerHTML = `<label class="text-[7px] font-bold text-gray-400 uppercase">Pitch (CC 43)</label>`;
-                const pitchSlider = document.createElement('input');
-                pitchSlider.type = "range"; pitchSlider.min = 0; pitchSlider.max = 127; pitchSlider.value = 64;
-                pitchSlider.className = "small-slider";
-                pitchSlider.oninput = (e) => sendControlChange(row + 1, 43, e.target.value);
-                pitchRow.appendChild(pitchSlider);
-
-                // Hi Cut Control (CC 42)
-                const cutRow = document.createElement('div');
-                cutRow.className = "flex flex-col";
-                cutRow.innerHTML = `<label class="text-[7px] font-bold text-gray-400 uppercase">Hi Cut (CC 42)</label>`;
-                const cutSlider = document.createElement('input');
-                cutSlider.type = "range"; cutSlider.min = 0; cutSlider.max = 127; cutSlider.value = 127;
-                cutSlider.className = "small-slider";
-                cutSlider.oninput = (e) => sendControlChange(row + 1, 42, e.target.value);
-                cutRow.appendChild(cutSlider);
-                
-                controlPanel.appendChild(label);
-                controlPanel.appendChild(pitchRow);
-                controlPanel.appendChild(cutRow);
-                gridContainer.appendChild(controlPanel);
-
-                // 16 Steps
-                for (let col = 0; col < STEPS; col++) {
+            for (let r = 0; r < PARTS; r++) {
+                const ctrl = document.createElement('div');
+                ctrl.className = "flex flex-col justify-center gap-1 bg-white/50 p-1 rounded-lg";
+                ctrl.innerHTML = `<div class="text-[8px] font-black">PART ${r+1}</div>
+                    <input type="range" min="0" max="127" value="64" class="small-slider" oninput="sendCC(${r}, 43, this.value)">
+                    <input type="range" min="0" max="127" value="127" class="small-slider" oninput="sendCC(${r}, 42, this.value)">`;
+                gridContainer.appendChild(ctrl);
+                for (let c = 0; c < STEPS; c++) {
                     const btn = document.createElement('button');
-                    const isFour = Math.floor(col / 4) % 2 === 0;
-                    btn.className = `step-btn rounded-md border ${isFour ? 'bg-gray-300 border-gray-400' : 'bg-gray-200 border-gray-300'} hover:border-blue-400`;
-                    btn.id = `step-${row}-${col}`;
-                    btn.onclick = () => {
-                        gridState[row][col] = gridState[row][col] ? 0 : 1;
-                        btn.classList.toggle('step-active');
-                        if(gridState[row][col]) sendMidiNote(row+1, 60);
-                    };
+                    btn.className = `step-btn border ${Math.floor(c/4)%2===0 ? 'bg-white border-gray-300' : 'bg-gray-100 border-gray-300'}`;
+                    btn.id = `step-${r}-${c}`;
+                    btn.onclick = () => { gridState[r][c] = !gridState[r][c]; btn.classList.toggle('step-active'); if(gridState[r][c]) sendMidi(r, 60, 127); };
                     gridContainer.appendChild(btn);
                 }
             }
         }
         createGrid();
 
-        // --- SEQUENCER LOGIC ---
-        const tempoSlider = document.getElementById('tempo-slider');
-        const tempoVal = document.getElementById('tempo-val');
-        tempoSlider.oninput = (e) => {
-            tempo = e.target.value;
-            tempoVal.innerText = `${tempo} BPM`;
-        };
-
         function playStep() {
             document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('current-step'));
-            for (let row = 0; row < PARTS; row++) {
-                const btn = document.getElementById(`step-${row}-${currentStep}`);
+            for (let r = 0; r < PARTS; r++) {
+                const btn = document.getElementById(`step-${r}-${currentStep}`);
                 btn.classList.add('current-step');
-                if (gridState[row][currentStep]) sendMidiNote(row + 1, 60); 
+                if (gridState[r][currentStep]) sendMidi(r, 60, 127);
             }
             currentStep = (currentStep + 1) % STEPS;
             timerId = setTimeout(playStep, (60000 / tempo) / 4);
@@ -206,25 +103,11 @@
 
         document.getElementById('play-btn').onclick = (e) => {
             isPlaying = !isPlaying;
-            if (isPlaying) {
-                e.target.innerText = "■ Stop Sequence";
-                e.target.className = "bg-red-600 hover:bg-red-500 text-white text-xs px-8 py-2 rounded-full font-black uppercase shadow-[0_3px_0_0_rgba(153,27,27,1)] active:shadow-none active:translate-y-1 transition-all";
-                currentStep = 0;
-                playStep();
-            } else {
-                e.target.innerText = "▶ Play Sequence";
-                e.target.className = "bg-green-600 hover:bg-green-500 text-white text-xs px-8 py-2 rounded-full font-black uppercase shadow-[0_3px_0_0_rgba(22,101,52,1)] active:shadow-none active:translate-y-1 transition-all";
-                clearTimeout(timerId);
-                document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('current-step'));
-            }
+            if (isPlaying) { e.target.innerText = "■ Stop"; currentStep = 0; playStep(); }
+            else { e.target.innerText = "▶ Play"; clearTimeout(timerId); document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('current-step')); }
         };
-
-        document.getElementById('clear-grid').onclick = () => {
-            for (let r=0; r<PARTS; r++) {
-                for (let c=0; c<STEPS; c++) gridState[r][c] = 0;
-            }
-            document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('step-active'));
-        };
+        document.getElementById('tempo-slider').oninput = (e) => { tempo = e.target.value; document.getElementById('tempo-val').innerText = tempo; };
+        document.getElementById('clear-grid').onclick = () => { gridState.forEach(r => r.fill(0)); document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('step-active')); };
     </script>
 </body>
 </html>
